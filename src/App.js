@@ -1,25 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import MainPage from "./containers/MainPage";
+import "./App.css";
+import PostPage from "./containers/PostPage";
+import UserPosts from "./containers/UserPosts";
+import SignInPage from "./containers/SignInPage";
+import SignUpPage from "./containers/SignUpPage";
+import CreatePostPage from "./containers/CreatePostPage";
+import EditPostPage from "./containers/EditPostPage";
+import PostPagePrivate from "./containers/PostPagePrivate";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  console.log(localStorage);
+  localStorage.setItem("access_token", "userToken123");
+  //localStorage.clear();
+  if (localStorage.getItem("access_token") !== null) {
+    return (
+      <div className="App">
+        <Router>
+          <Switch>
+            {/* private pages */}
+            <Route exact path="/create" component={CreatePostPage} />
+            <Route exact path="/edit/:id" component={EditPostPage} />
+            <Route exact path="/view/:id" component={PostPagePrivate} />
+            <Route exact path="/" component={UserPosts} />
+            <Route exact path="*" component={UserPosts} />
+          </Switch>
+        </Router>
+      </div>
+    );
+  } else {
+    return (
+      <div className="App">
+        <Router>
+          <Switch>
+            {/* public pages */}
+            <Route exact path="/" component={MainPage} />
+            <Route exact path="/blog/:id" component={PostPage} />
+            <Route exact path="/login" component={SignInPage} />
+            <Route exact path="/signup" component={SignUpPage} />
+            <Route exact path="*" component={MainPage} />
+          </Switch>
+        </Router>
+      </div>
+    );
+  }
 }
 
 export default App;
