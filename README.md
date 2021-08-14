@@ -25,14 +25,13 @@ All participants are recommended to have the following skills to participate in 
 ## Topics we'll be covering:
 
 - [Creating the react application](https://github.com/Propo41/msa-workshop/tree/main#creating-the-react-application)
-- [Creating a dotnet project template](https://github.com/dabit3/aws-appsync-react-workshop#adding-a-graphql-api)
-- [How Controllers work](https://github.com/dabit3/aws-appsync-react-workshop#local-mocking-and-testing)
-- [Adding MongoDB](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
-- [Creating User accounts](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
-- [Creating a JWT token](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
-- [Custom Middleware Authentication](https://github.com/dabit3/aws-appsync-react-workshop#adding-authorization-to-the-graphql-api)
-- [Creating Authenticated Endpoints](https://github.com/dabit3/aws-appsync-react-workshop#adding-authorization-to-the-graphql-api)
-- [Uploading Files to Cloud Bucket](https://github.com/dabit3/aws-appsync-react-workshop#lambda-graphql-resolvers)
+- [Creating a dotnet project template](https://github.com/Propo41/msa-workshop/tree/main#creating-a-dotnet-project-template)
+- [How Controllers work](https://github.com/Propo41/msa-workshop/tree/main#how-controllers-work)
+- [Adding MongoDB](https://github.com/Propo41/msa-workshop/tree/main#adding-mongodb)
+- [Creating User accounts](https://github.com/Propo41/msa-workshop/tree/main#creating-user-accounts)
+- [Creating a JWT token](https://github.com/Propo41/msa-workshop/tree/main#creating-a-jwt-token)
+- [Custom Middleware Authentication](https://github.com/Propo41/msa-workshop/tree/main#custom-middleware-authentication)
+- [Creating Authenticated Endpoints & Cloud Bucket](https://github.com/Propo41/msa-workshop/tree/main#creating-authenticated-endpoints)
 
 ## What we're building
 
