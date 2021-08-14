@@ -931,7 +931,7 @@ Finally, we add the front end code to send a POST request with the Post contents
       const { data } = await axios.post(
         `https://localhost:5001/post/auth/posts`,
         formData,
-        config
+        config 
       );
 ```
 That's it for the workshop. You can find the completed project [here](https://github.com/Propo41/msa-workshop/tree/main/03_completed_project)
