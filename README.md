@@ -29,6 +29,7 @@ All participants are recommended to have the following skills to participate in 
 - [How Controllers work](https://github.com/dabit3/aws-appsync-react-workshop#local-mocking-and-testing)
 - [Adding MongoDB](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
 - [Creating User accounts](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
+- [Creating a JWT token](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
 - [Custom Middleware Authentication](https://github.com/dabit3/aws-appsync-react-workshop#adding-authorization-to-the-graphql-api)
 - [Uploading Files to Cloud Bucket](https://github.com/dabit3/aws-appsync-react-workshop#lambda-graphql-resolvers)
 
@@ -356,6 +357,14 @@ namespace project.Service
 Next inject the Service class into our project from the `Startup.cs` file. This allows the class to automatically instantiate so that we can use them in our controller classes as a constructor parameter. 
 > *This is called [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection).*
 
+*Startup.cs*
+```csharp
+ public void ConfigureServices(IServiceCollection services)
+ { 
+	 services.AddScoped<IBlogService, BlogService>();
+ } 
+```
+
 *UserController.cs*
 ```csharp
  private readonly IBlogService _blogService;
@@ -377,7 +386,7 @@ Now from the client side, we send a POST request sending the user information as
 ```
 
 
-### Custom Middleware Authentication
+### Creating a JWT token
 
 Now, since our user is logged in, we can sign in. But after the user signs in, how are we going to store the user session? Are we going to let the user sign in every single time after every page refresh? Well no. What we need is to make some sort of handshaking method. For example, after a user signs in, the server is going to generate a trusted signature (called a **JWT token**) and then send this signature back to the client. The client is going to save this token and whenever a new request is to be made to the server, the client will send this token along with the request. The server checks this token and if it is verified, the request is authenticated.
 
@@ -389,7 +398,307 @@ Now, since our user is logged in, we can sign in. But after the user signs in, h
 
 ![image](https://user-images.githubusercontent.com/46298019/129455104-352dc98c-ef71-41fd-aa12-287a47a432ff.png)
 
+We need to add the following packages: 
+```bash
+$ dotnet add package Microsoft.AspNetCore.Authentication
+$ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+$ dotnet add package System.IdentityModel.Tokens.Jwt
+$ dotnet add package BCrypt.Net-Next --version 4.0.2
+$ dotnet add package Newtonsoft.Json --version 13.0.1
+```
+Now let's add the login method in our `UserController.cs`
+
+*/Controller/UserController.cs*
+```csharp
+[HttpPost]
+[Route("login")]
+public ActionResult Login(UserViewModel user)
+{
+   Payload res = _blogService.Login(user);
+   if (res.StatusCode != 200)
+   {
+       return new BadRequestObjectResult(new ErrorResult("Something is wrong", 400, res.StatusDescription));
+
+   }
+   return Ok(res);
+}
+```
+
+The UserViewModel class is another model class that we created that contains only email and password as the required attributes. We could have used our old User class but we didn't as that class contained more than 2 attributes as required. 
+
+*Models/UserViewModel.cs*
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace project.Models
+{
+    public class UserViewModel
+    {
+        [RegularExpression(@"^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}" +
+                                    @"\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\" +
+                                    @".)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$",
+                                    ErrorMessage = "Email is not valid")]
+        [Required]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(255, ErrorMessage = "Must be between 5 and 255 characters", MinimumLength = 5)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; }
+
+    }
+}
+```
+In our service class, add:
+
+*/Service/BlogService.cs*
+
+```csharp
+ public interface IBlogService
+ {
+      Payload Login(UserViewModel userVm);
+ }
+ public class BlogService : IBlogService
+ {
+	  //...
+      private readonly string _secretKey;
+      private readonly int _tokenExpiryTime;
+      
+	  public  BlogService(IConfiguration  config)
+	  {
+		   //...  
+		  _secretKey = config["JWT:Secret"];
+		  _tokenExpiryTime = Int32.Parse(config["JWT:ExpiresIn"]);
+	  }
+		
+	   public Payload Login(UserViewModel userVm)
+       {
+            // check if user exist
+            var user = _userCollection.Find(x => x.Email == userVm.Email).FirstOrDefault();
+            if (user == null)
+            {
+                Console.WriteLine(userVm.Email + " doesnt exist");
+                return new Payload { StatusCode = 404, StatusDescription = "User doesn't exist." };
+            }
+            else
+            {
+                // decoding hash password
+                bool isPasswordVerified = BCrypt.Net.BCrypt.Verify(userVm.Password, user.Password);
+                if (!isPasswordVerified)
+                {
+                    Console.WriteLine("Password is incorrect");
+                    return new Payload { StatusCode = 400, StatusDescription = "Password is incorrect. Did you forget your password?" };
+                }
+                else
+                {
+                    string token = Util.GenerateToken(user, _secretKey, "User", _tokenExpiryTime);
+                    return new Payload
+                    {
+                        StatusCode = 200,
+                        StatusDescription = token,
+                    };
+                }
+            }
+       }
+ }
+
+```
+
+Next add the Util class in a folder named Helpers. This is responsible for generating the JWT token after a user signs in.
+
+*Helpers/Util.cs*
+
+```csharp
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using project.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System;
+
+namespace project.Helpers
+{
+    public static class Util
+    {
+        public static string GenerateToken(User user, string secret, string role, int expiryTime)
+        {
+            // generate token that is valid for 7 days
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(secret);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()), new Claim("role", role) }),
+                Expires = DateTime.UtcNow.AddHours(expiryTime),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+    }
+}
+```
+
+Now, let's add the POST request in our client side login page
+```js
+ const { data } = await POST("user/login", {
+        email: form.email,
+        password: form.password,
+      });
+ console.log(data); // the data will contain the JWT token
+```
 
 
+### Custom Middleware Authentication
 
+Now that we got the JWT access token, we can start making our authenticated API endpoints.
+C# can automatically make an API endpoint private by using the `[Authorize]` attribute or make them public by using the `[AllowAnonymous]` attribute. 
+
+Now, if we just use these attributes, it's going to work perfectly out of the box. We can easily make endpoints private or anonymous. But what if we want to access the `UserId` that we stored earlier inside the JWT token? For that, we need to make a custom JWT [Middleware](https://www.tutorialsteacher.com/core/aspnet-core-middleware#:~:text=A%20middleware%20is%20nothing%20but,and%20executed%20in%20each%20request.). 
+
+Add the following snippet:
+
+*Helpers/JwtMiddleware.cs*
+```csharp
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using project.Service;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace project.Helpers
+{
+    public class JwtMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly string _secret;
+
+        public JwtMiddleware(RequestDelegate next, IConfiguration config)
+        {
+            _next = next;
+            _secret = config["JWT:Secret"];
+        }
+
+        /*
+         * Since we assigned JwtMiddleware as our custom middleware in the Startup.cs file ie: app.UseMiddleware<JwtMiddleware>();,
+         * this method gets called implicitly
+        */
+        public async Task Invoke(HttpContext context, IBlogService userService)
+        {
+            // parsing the jwt token from the header "Authorization"
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var userId = Util.ValidateToken(token, _secret);
+            if (userId != null)
+            {
+                // attach user to context on successful jwt validation
+                // we can the access this context object in our controller classes
+                context.Items["UserId"] = userService.GetById(userId).Id;
+            }
+
+            await _next(context);
+        }
+    }
+}
+```
+Add the GetById() method in the service class.
+
+*Services/BlogService.cs*
+```csharp
+  public User GetById(string id)
+  {
+      return _userCollection.Find(x => x.Id == id).FirstOrDefault();
+  }
+```
+
+
+Now, let's add the ValidateToken() method in our Util class:
+
+*Helpers/Util.cs*
+
+```csharp
+		 /* 
+         * This method is used to validate the token and then decode the userId stored in the token
+         */
+        public static string ValidateToken(string token, string secret)
+        {
+            if (token == null)
+                return null;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(secret);
+            try
+            {
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
+
+                // return user id from JWT token if validation successful
+                return userId;
+            }
+            catch
+            {
+                // return null if validation fails
+                return null;
+            }
+        }
+```
+
+
+Next in our `Startup.cs` file, we need to add our custom middleware in the `Configure()` method and add the authentication service in the `ConfigureServices()` method:
+
+*Startup.cs*
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+			// Adding Authentication  
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+
+            // Adding Jwt Bearer  
+            .AddJwtBearer(options =>
+              {
+                  options.SaveToken = true;
+                  options.RequireHttpsMetadata = false;
+                  options.TokenValidationParameters = new TokenValidationParameters()
+                  {
+                      ValidateIssuer = false,
+                      ValidateIssuerSigningKey = true,
+                      ValidateAudience = false,
+                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"])),
+                      ClockSkew = TimeSpan.Zero,
+                      ValidateLifetime = true
+                  };
+              });
+}
+
+public  void  Configure(IApplicationBuilder  app, IWebHostEnvironment  env)
+{
+			//...
+			// order is a must here.
+			app.UseRouting();
+		    app.UseAuthentication();
+            app.UseAuthorization();
+            // custom jwt auth middleware
+            app.UseMiddleware<JwtMiddleware>();
+}
+```
+
+Now, after every request, the server is going to parse the JWT token and attach the user ID into the HTTPContext instance. To inject HTTPContext so that we can access it in all of our controller classes, we have to add it to the `Startup.cs` file in the `ConfigureServices()` method.
+
+*Startup.cs*
+
+```csharp
+ services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+```
 
