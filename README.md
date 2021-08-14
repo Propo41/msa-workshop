@@ -378,12 +378,15 @@ Next inject the Service class into our project from the `Startup.cs` file. This 
 Now from the client side, we send a POST request sending the user information as payload. Note that the model validations are done automatically since we included the `[ApiController]` attribute.
 
 ```js
- const { data } = await POST("user/register", {
-     name: form.name,
-     email: form.email,
-     password: form.password,
-     confirmPassword: form.confirmPassword,
- });
+   const { data } = await axios.post(
+        `https://localhost:5001/user/register`,
+        {
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+        }
+   );
 ```
 
 
@@ -541,10 +544,11 @@ namespace project.Helpers
 
 Now, let's add the POST request in our client side login page
 ```js
- const { data } = await POST("user/login", {
-        email: form.email,
-        password: form.password,
-      });
+ const { data } = await axios.post(`https://localhost:5001/user/login`, {
+      email: form.email,
+      password: form.password,
+ });
+
  console.log(data); // the data will contain the JWT token
 ```
 
@@ -911,3 +915,23 @@ First, we add the Uploadare credentials in `appsettings.json`
 ```
 
 Finally, we add the front end code to send a POST request with the Post contents:
+```js
+	  var formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("category", form.category);
+      formData.append("description", form.description);
+      formData.append("coverPhoto", file);
+
+      // sending the header with the bearer token
+      const config = {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("access_token"),
+        },
+      };
+
+      const { data } = await axios.post(
+        `https://localhost:5001/post/auth/posts`,
+        formData,
+        config
+      );
+```
