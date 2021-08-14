@@ -197,10 +197,10 @@ For the workshop, we are going to use a local mongodb server that will be hosted
 
 ### Creating User accounts
 
-Let's start by adding a user login functionalty. 
-Firstly, we need to create a Model class for the `User` table. Create a new folder named, `Models` and create a model class representing Users:
+Let's start by adding a functionality to create a new user.
+Firstly, we need to create a Model class for the `User` table. Create a new folder named, `Models` and create a model class representing Users.
 
-*User.cs*
+*Models/User.cs*
 ```csharp 
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson.Serialization.Attributes;
@@ -243,6 +243,152 @@ namespace project.Models
     }
 }
 ```
+Next, we create a new Controller named `UserController.cs`. 
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using project.Models;
+using project.Service;
+
+namespace project.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class UserController : ControllerBase
+    {
+        private readonly IBlogService _blogService;
+
+        public UserController(IBlogService _blogService)
+        {
+            this._blogService= _blogService;
+        }
+
+        [HttpPost]
+        [Route("register")]
+        public ActionResult Register(User user)
+        {
+            Payload res = _blogService.Create(user);
+            if (res.StatusCode != 200)
+            {
+                return new BadRequestObjectResult(new ErrorResult("Someting is wrong", 400, res.StatusDescription));
+            }
+            return Ok(res);
+        }
+    }
+}
+
+```
+
+As we can see, there's a class we defined called `BlogService`. This is a service class. A service class is a place where we keep all our business logics including database calls and other logic. In software development, such design patterns are encouraged since they are helpful when your application scales up or when you are working with other collaborators.
+
+We also create a class called `Payload.cs` that will help sending data between our service class and controller class.
+
+*Models/Payload.cs*
+```csharp
+namespace project.Models
+{
+    public class Payload
+    {
+        public int StatusCode { get; set; }
+        public string StatusDescription { get; set; }
+    }
+}
+```
+Next, we add the credentials required for our database. A good practice to store private credentials is in the file `appsettings.json`. 
+
+*appsettings.json*
+```json
+{
+  "MongoDbConnection": {
+    "DatabaseName": "Workshop",
+    "URL": "mongodb://localhost"
+  },
+}
+```
+
+So, let's create the service class.
+
+*Service/BlogService.cs*
+```csharp
+namespace project.Service
+{
+    public interface IBlogService
+    {
+        Payload Create(User user);
+    }
+     public class BlogService : IBlogService
+     {
+	    private  readonly  IMongoCollection<User> _userCollection;
+	    
+		puvlic BlogService(IConfiguaration config)
+		{
+		    var client = new MongoClient(config["MongoDbConnection:URL"]);
+            var db = client.GetDatabase(config["MongoDbConnection:DatabaseName"]);
+            _userCollection = db.GetCollection<User>("Users");
+		}
+		
+	    public Payload Create(User user)
+        {
+            // check if user with the email already exist or not
+            var existingUser = _userCollection.Find(x => x.Email == user.Email).FirstOrDefault();
+            if (existingUser != null)
+            {
+                Console.WriteLine("User with the email already exist");
+                return new Payload { StatusCode = 404, StatusDescription = "User with the email already exist." };
+            }
+            else
+            {
+                // add user to the collection
+                // create a hashed password
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password, BCrypt.Net.BCrypt.GenerateSalt(12));
+                _userCollection.InsertOne(user);
+                return new Payload { StatusCode = 200, StatusDescription = "User created successfully." };
+
+            }
+
+        }
+    
+    
+     }
+    
+}
+```
+Next inject the Service class into our project from the `Startup.cs` file. This allows the class to automatically instantiate so that we can use them in our controller classes as a constructor parameter. 
+> *This is called [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection).*
+
+*UserController.cs*
+```csharp
+ private readonly IBlogService _blogService;
+
+ public UserController(IBlogService _userService)
+ {
+     this._blogService = _userService;
+ }
+```
+Now from the client side, we send a POST request sending the user information as payload. Note that the model validations are done automatically since we included the `[ApiController]` attribute.
+
+```js
+ const { data } = await POST("user/register", {
+     name: form.name,
+     email: form.email,
+     password: form.password,
+     confirmPassword: form.confirmPassword,
+ });
+```
+
+
+### Custom Middleware Authentication
+
+Now, since our user is logged in, we can sign in. But after the user signs in, how are we going to store the user session? Are we going to let the user sign in every single time after every page refresh? Well no. What we need is to make some sort of handshaking method. For example, after a user signs in, the server is going to generate a trusted signature (called a **JWT token**) and then send this signature back to the client. The client is going to save this token and whenever a new request is to be made to the server, the client will send this token along with the request. The server checks this token and if it is verified, the request is authenticated.
+
+> *JWT stands for JSON Web Token. It is a security validation mechanism widely used nowadays. JWT is basically a string of random alphanumeric characters. There are three parts of a JWT separated by dots: **header**, **payload**, and **signature**.* [Reference](https://medium.com/dataseries/public-claims-and-how-to-validate-a-jwt-1d6c81823826)
+
+**Header**:  contains the information about the type of the token and the algorithm used to generate the signature
+**Payload**:  contains verifiable security statements, such as the identity of the user and the permissions they are allowed. The payload information is also referred to as Claims.
+**Signature**:  it is generated using the given payload and a secret key. The server verifies this signature and allow authenticated routes if verfied. This is the most important part of the JWT token. Anyone with the access to the secret key, can mock your signature and penetrate your system.
+
+![image](https://user-images.githubusercontent.com/46298019/129455104-352dc98c-ef71-41fd-aa12-287a47a432ff.png)
+
 
 
 
