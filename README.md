@@ -31,6 +31,7 @@ All participants are recommended to have the following skills to participate in 
 - [Creating User accounts](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
 - [Creating a JWT token](https://github.com/dabit3/aws-appsync-react-workshop#adding-authentication)
 - [Custom Middleware Authentication](https://github.com/dabit3/aws-appsync-react-workshop#adding-authorization-to-the-graphql-api)
+- [Creating Authenticated Endpoints](https://github.com/dabit3/aws-appsync-react-workshop#adding-authorization-to-the-graphql-api)
 - [Uploading Files to Cloud Bucket](https://github.com/dabit3/aws-appsync-react-workshop#lambda-graphql-resolvers)
 
 ## What we're building
@@ -599,7 +600,7 @@ namespace project.Helpers
     }
 }
 ```
-Add the GetById() method in the service class.
+Add the `GetById()` method in the service class.
 
 *Services/BlogService.cs*
 ```csharp
@@ -702,3 +703,211 @@ Now, after every request, the server is going to parse the JWT token and attach 
  services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 ```
 
+### Creating Authenticated Endpoints
+
+Now that we can create private endpoints, let's start by adding the API to create a post.
+
+Create a new Controlled called `PostController.cs`
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using project.Models;
+using project.Service;
+
+namespace project.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class PostController : ControllerBase
+    {
+        private readonly IBlogService _blogService;
+        private readonly string _userId;
+
+        public PostController(IBlogService _blogService)
+        {
+            this._blogService = _blogService;
+            // this is used to parse the userid from the httpContext instance
+            IHttpContextAccessor _httpContextAccessor = new HttpContextAccessor();
+            _userId = (string)_httpContextAccessor.HttpContext.Items["UserId"];
+
+        }
+         // GET /[post]/posts
+        [HttpGet]
+        [Route("posts")]
+        public ActionResult GetPosts()
+        {
+            List<Post> posts = _blogService.GetPosts();
+            if (posts == null)
+            {
+                return new BadRequestObjectResult(new ErrorResult("Invalid inputs", 400, "Something is wrong"));
+            }
+            return Ok(posts);
+        }
+
+        // POST /[post]/auth
+        [Authorize]
+        [HttpPost]
+        [Route("auth")]
+        async public Task<ActionResult> Create([FromForm] Post post)
+        {
+            post.AuthorId = _userId;
+            Payload res = await _blogService.CreatePost(post);
+            if (res.StatusCode != 200)
+            {
+                return new BadRequestObjectResult(new ErrorResult("Internal Server Error", 400, res.StatusDescription));
+            }
+            return Ok(res);
+        }   
+    }
+}
+```
+
+Now, let's add the 2 methods in BlogService.cs that we called in the above snippet. 
+We are getting the user input values as `multipart/formdata` , since we are sending the image file as well.
+Now when creating the Post, we are going to upload the file in `UploadCare` and the url that we recevied will be saved in the database.
+
+To upload a file to UploadCare, we need to send a [signature](https://uploadcare.com/docs/security/secure-uploads/#make-signature) in the request header. The signature contains a secret key and an expiration time and shoudl be encoded in HMAC/SHA256. 
+
+In our Util method, we are adding the methods to generate this signature for us.
+
+References: 
+
+ - [Uploadcare REST API](https://uploadcare.com/api-refs/upload-api/#tag/Upload)
+ - [Uploadcare docs](https://uploadcare.com/docs/uploads/)
+ 
+First, we add the Uploadare credentials in `appsettings.json`
+
+*appsettings.json*
+```js
+ "UploadCare": {
+    "PubKey": "<add your public folder key found in your uploadcare profile>",
+    "Secret": "<add your secret key found in your uploadcare profile>",
+    "Expiry": "1"
+  }
+```
+
+
+*Services/BlogService.cs*
+
+```csharp
+   public class BlogService : IBlogService
+   {
+	    private readonly IMongoCollection<Post> _postCollection;
+	    private readonly string _uploadCareSecret;
+	    private readonly string _uploadCarePubKey;
+	    private readonly int _uploadCareExpiry;
+	    
+	    public BlogService(IConfiguration config)
+        {
+             //...
+            _postCollection = db.GetCollection<Post>("Posts");
+            // upload care keys
+            _uploadCarePubKey = config["UploadCare:PubKey"];
+            _uploadCareSecret = config["UploadCare:Secret"];
+            _uploadCareExpiry = int.Parse(config["UploadCare:Expiry"]);
+        }
+        
+        async public Task<Payload> CreatePost(Post post)
+        {
+            try
+            {
+                // upload the image to the cloud bucket and then store the url
+                var res = await UploadImage(post.CoverPhoto);
+                if (res == null)
+                {
+                    return new Payload { StatusCode = 400, StatusDescription = "Couldn't upload image" };
+                }
+
+                post.CoverPhotoPreview = res.StatusDescription;
+                // setting the file field to null as we won't be saving the file directly in the database
+                post.CoverPhoto = null;
+
+                // insert the post into database
+                await _postCollection.InsertOneAsync(post);
+                return new Payload { StatusCode = 200, StatusDescription = "Post created successfully." };
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return new Payload { StatusCode = 400, StatusDescription = e.Message };
+            }
+
+        }
+
+        async public Task<Payload> UploadImage(IFormFile file)
+        {
+
+            string URL = $"https://upload.uploadcare.com/base/";
+            HttpClient client = new HttpClient();
+
+            // the following headers are required for the uploadcare API
+            KeyValuePair<string, string> keys = Util.GenerateSignature(_uploadCareSecret, _uploadCareExpiry);
+
+            MultipartFormDataContent form = new MultipartFormDataContent();
+            // convert file to byte array
+            byte[] data;
+            using (var br = new BinaryReader(file.OpenReadStream()))
+                data = br.ReadBytes((int)file.OpenReadStream().Length);
+
+            ByteArrayContent bytes = new ByteArrayContent(data);
+            form.Add(new StringContent(keys.Key), "expire");
+            form.Add(new StringContent(keys.Value), "signature");
+            form.Add(new StringContent(_uploadCarePubKey), "UPLOADCARE_PUB_KEY");
+            form.Add(new StringContent("1"), "UPLOADCARE_STORE");
+            form.Add(bytes, "file", file.FileName);
+
+            HttpResponseMessage response = await client.PostAsync(URL, form);
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Image uploaded successfully");
+                var jo = JObject.Parse(response.Content.ReadAsStringAsync().Result);
+                var fileUrl = jo["file"].ToString();
+                Console.WriteLine(fileUrl);
+
+                return new Payload { StatusCode = 200, StatusDescription = $"https://ucarecdn.com/{fileUrl}/" };
+
+            }
+            return null;
+        }
+   }
+```
+
+*Helpers/Util.cs*
+
+```csharp
+	    public static KeyValuePair<string, string> GenerateSignature(string secret, int expiry)
+        {
+            TimeSpan expiryTime = TimeSpan.FromMinutes(expiry);
+            var expire = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() + expiryTime.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+            var signature = StringToMD5(secret + expire);
+
+            return new KeyValuePair<string, string>(expire, signature);
+
+        }
+
+        // implicit call from ValidateToken()
+        private static string StringToMD5(string s)
+        {
+            using (var md5 = MD5.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(s);
+                var hashBytes = md5.ComputeHash(bytes);
+                return HexStringFromBytes(hashBytes);
+            }
+        }
+
+        // implict call from StringToMD5
+        private static string HexStringFromBytes(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+        }
+
+```
+
+Finally, we add the front end code to send a POST request with the Post contents:
