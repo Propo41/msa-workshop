@@ -8,6 +8,20 @@ import TextField from "@material-ui/core/TextField";
 import PublishIcon from "@material-ui/icons/Publish";
 import HeaderPrivate from "../../components/HeaderPrivate";
 import useStyles from "../../styles/create_post";
+import SelectTextInputLayout from "../../components/SelectTextInputLayout";
+import axios from "axios";
+
+const categoryList = [
+  "Fashion",
+  "Food",
+  "Travel",
+  "Music",
+  "Art",
+  "Animals",
+  "Vehicles",
+  "Entertainment",
+  "Education",
+];
 
 export default function CreatePostPage() {
   const classes = useStyles();
@@ -110,9 +124,17 @@ export default function CreatePostPage() {
                   },
                 }} // font size of input label
               />
+              <SelectTextInputLayout
+                placeholder="Select category"
+                value={null}
+                onInputChange={onInputChange}
+                list={categoryList}
+                name="category"
+                setSelectedValue={setForm}
+              />
               <div style={{ marginTop: "var(--margin-item-spacing)" }}>
                 <input
-                  accept=".pdf,.doc,.docx"
+                  accept="image/*"
                   className={classes.input}
                   id="contained-button-file"
                   required

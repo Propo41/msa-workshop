@@ -11,7 +11,6 @@ import PostPagePrivate from "./containers/PostPagePrivate";
 
 function App() {
   console.log(localStorage);
-  localStorage.setItem("access_token", "userToken123");
   //localStorage.clear();
   if (localStorage.getItem("access_token") !== null) {
     return (

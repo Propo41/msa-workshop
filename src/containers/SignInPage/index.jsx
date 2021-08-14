@@ -21,6 +21,11 @@ export default function SignInPage() {
     }));
   };
 
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    console.log(form);
+  };
+
   return (
     <div className={classes.root}>
       <Container maxWidth="lg">
@@ -87,12 +92,11 @@ export default function SignInPage() {
                 variant="contained"
                 color="primary"
                 className={classes.submit}
-                onClick={() => {
-                  window.location.href = "/home";
-                }}
+                onClick={onSubmit}
               >
                 Login
               </Button>
+
               <Link href="/signup" variant="h6" className={classes.link}>
                 Don't have an account?{" "}
                 <span style={{ fontWeight: "bold" }}>Sign Up</span>

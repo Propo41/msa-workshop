@@ -8,6 +8,7 @@ import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import Link from "@material-ui/core/Link";
 import useStyles from "../../styles/sign_up";
+import axios from "axios";
 
 export default function SignUpPage() {
   const classes = useStyles();
@@ -15,10 +16,16 @@ export default function SignUpPage() {
 
   const onInputChange = (event) => {
     const { value, name } = event.target;
+    console.log(value, name);
     setForm((prevState) => ({
       ...prevState,
       [name]: value,
     }));
+  };
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    console.log(form);
   };
 
   return (
@@ -31,6 +38,30 @@ export default function SignUpPage() {
               Sign Up
             </Typography>
             <form className={classes.form} noValidate>
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                onChange={onInputChange}
+                id="name"
+                label="Enter name"
+                name="name"
+                autoFocus
+                inputProps={{
+                  style: {
+                    fontSize: "var(--font-size-h6)",
+                    color: "var(--darkash)",
+                    fontFamily: "var(--font)",
+                  },
+                }} // font size of input text
+                InputLabelProps={{
+                  style: {
+                    color: "var(--darkash)",
+                    fontFamily: "var(--font)",
+                  },
+                }} // font size of input label
+              />
               <TextField
                 variant="outlined"
                 margin="normal"
@@ -66,7 +97,6 @@ export default function SignUpPage() {
                 label="Password"
                 type="password"
                 id="password"
-                autoComplete="current-password"
                 inputProps={{
                   style: {
                     fontSize: "var(--font-size-h6)",
@@ -90,8 +120,8 @@ export default function SignUpPage() {
                 name="confirmPassword"
                 label="Confirm password"
                 type="password"
-                id="password"
-                autoComplete="current-password"
+                onChange={onInputChange}
+                id="confirmPassword"
                 inputProps={{
                   style: {
                     fontSize: "var(--font-size-h6)",
@@ -113,6 +143,7 @@ export default function SignUpPage() {
                 variant="contained"
                 color="primary"
                 className={classes.submit}
+                onClick={onSubmit}
               >
                 Sign up
               </Button>

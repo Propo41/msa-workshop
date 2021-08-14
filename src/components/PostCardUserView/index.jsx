@@ -23,7 +23,7 @@ export default function PostCardUserView(props) {
       <Card className={classes.card} elevation={0}>
         <CardMedia
           className={classes.cardMedia}
-          image="https://picsum.photos/200/300"
+          image={post.coverPhotoPreview}
           title="Image title"
         />
         <div className={classes.cardDetails}>
@@ -48,7 +48,7 @@ export default function PostCardUserView(props) {
                     className={classes.section}
                     style={{ color: "var(--darkash)", marginTop: "5px" }}
                   >
-                    {post.date}
+                    {post.createdAt}
                   </Typography>
                 </Grid>
               </Grid>
