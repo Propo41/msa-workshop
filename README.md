@@ -310,7 +310,10 @@ Next, we add the credentials required for our database. A good practice to store
 }
 ```
 
-So, let's create the service class.
+So, let's create the service class. 
+Note that we are using an interface. This is called [**dependency inversion principle**](https://deviq.com/principles/dependency-inversion-principle).
+
+> The Dependency Inversion Principle (DIP) states that high level modules should not depend on low level modules; both should depend on abstractions. Abstractions should not depend on details.  Details should depend upon abstractions.
 
 *Service/BlogService.cs*
 ```csharp
@@ -460,9 +463,7 @@ namespace project.Models
     }
 }
 ```
-In our service class, add the following snippet. Note that we are using an interface. This is called [dependency inversion principle](https://deviq.com/principles/dependency-inversion-principle).
-
-> The Dependency Inversion Principle (DIP) states that high level modules should not depend on low level modules; both should depend on abstractions. Abstractions should not depend on details.  Details should depend upon abstractions.
+In our service class, add the following snippet:
 
 */Service/BlogService.cs*
 
