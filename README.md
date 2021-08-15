@@ -1,4 +1,4 @@
-# Welcome to the Microsoft Web Development with Dot Net Workshop
+# Welcome to the Microsoft Web Development with .Net Workshop
 
 ## Introduction
 
