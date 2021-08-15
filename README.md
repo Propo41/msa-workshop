@@ -196,6 +196,9 @@ $ dotnet add package MongoDB.Driver
 ```
 For the workshop, we are going to use a local mongodb server that will be hosted in our computer by using the following connection string: `mongodb://localhost`
 
+References:
+- https://docs.mongodb.com/manual/crud/ 
+
 ### Creating User accounts
 
 Let's start by adding a functionality to create a new user.
