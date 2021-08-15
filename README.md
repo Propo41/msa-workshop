@@ -357,6 +357,11 @@ namespace project.Service
 Next inject the Service class into our project from the `Startup.cs` file. This allows the class to automatically instantiate so that we can use them in our controller classes as a constructor parameter. 
 > *This is called [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection).*
 
+Note that we are using the method AddScoped(). There are other methods called AddTransient() or AddSingleton() which are used for different contexts. [Read more](https://www.ezzylearning.net/tutorial/asp-net-core-service-lifetimes-infographic/)
+
+> AddScoped(): The service instance will be created once per request. All middlewares, MVC controllers, etc. that participate in handling of a single request will get the same instance. 
+
+
 *Startup.cs*
 ```csharp
  public void ConfigureServices(IServiceCollection services)
