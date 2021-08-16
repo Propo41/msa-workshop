@@ -39,8 +39,21 @@ export default function SignInPage() {
       }
     } catch (e) {
       if (e.response) {
+        parseError(e);
       } else {
         console.log("server didnt respond");
+      }
+    }
+  };
+
+  const parseError = (e) => {
+    if (e.response) {
+      const errors = e.response.data.errors;
+
+      for (var key in errors) {
+        if (errors.hasOwnProperty(key)) {
+          console.log(key, errors[key]);
+        }
       }
     }
   };
