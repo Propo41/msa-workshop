@@ -210,6 +210,7 @@ References:
 
 Let's start by adding a functionality to create a new user.
 Firstly, we need to create a Model class for the `User` table. Create a new folder named, `Models` and create a model class representing Users.
+Note that, we are using [ActionResult](https://www.c-sharpcorner.com/article/action-result-in-asp-net-mvc/) as the return type. ActionResult is a custom data type. There are several dervied data types. Check the link
 
 *Models/User.cs*
 ```csharp 
@@ -406,6 +407,21 @@ Now from the client side, we send a POST request sending the user information as
    );
 ```
 
+To catch out the errors, add this snippet and call this from the catch block of your try catch 
+
+```js
+ const parseError = (e) => {
+    if (e.response) {
+      const errors = e.response.data.errors;
+
+      for (var key in errors) {
+        if (errors.hasOwnProperty(key)) {
+          console.log(key, errors[key]);
+        }
+      }
+    }
+  };
+```
 
 ### Creating a JWT token
 
