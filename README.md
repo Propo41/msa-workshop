@@ -407,6 +407,21 @@ Now from the client side, we send a POST request sending the user information as
    );
 ```
 
+To catch out the errors, add this snippet and call this from the catch block of your try catch 
+
+```js
+ const parseError = (e) => {
+    if (e.response) {
+      const errors = e.response.data.errors;
+
+      for (var key in errors) {
+        if (errors.hasOwnProperty(key)) {
+          console.log(key, errors[key]);
+        }
+      }
+    }
+  };
+```
 
 ### Creating a JWT token
 
