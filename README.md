@@ -210,6 +210,7 @@ References:
 
 Let's start by adding a functionality to create a new user.
 Firstly, we need to create a Model class for the `User` table. Create a new folder named, `Models` and create a model class representing Users.
+Note that, we are using [ActionResult](https://www.c-sharpcorner.com/article/action-result-in-asp-net-mvc/) as the return type. ActionResult is a custom data type. There are several dervied data types. Check the link
 
 *Models/User.cs*
 ```csharp 
