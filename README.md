@@ -21,6 +21,13 @@ All participants are recommended to have the following skills to participate in 
 
 ## Installation
 
+In this workshop, all the demonstration will be done using Visual Studio Code, which is a light-weight code editor. You are required to have the following tools and libraries installed before coming to the workshop:
+
+1. [Visual Studio Code](https://code.visualstudio.com/download)
+2. [Visual Studio Code Extensions](https://docs.google.com/document/d/1gNB-vaMqnpVvRyF61aaVBNnlt8tPn4eKC1CI0buNwgY/edit)
+3. [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/thank-you/sdk-5.0.400-windows-x64-installer)
+4. [Node.js](https://nodejs.org/en/download/)
+
 
 ## Topics we'll be covering:
 
