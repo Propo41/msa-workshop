@@ -21,13 +21,22 @@ This Web Development Workshop is designed to quickly introduce you to developing
  - Uploading files to Cloud Buckets (namely [UploadCare](https://uploadcare.com/))
 
 ## :books: Event Handbook 
-### Grab the **Exclusive Handbook** and get started with Azure today!
+### View the **Exclusive Handbook** and get started with Web Development today!
 
-<a download="Handbook-Link" href="https://raw.githubusercontent.com/sa-bd/webdev-dotnet-react/main/Resources/Ali-Ahnaf_Introduction-to-Web-Development.pdf" title="Download Handbook">
-    <img alt="Download" src="Assets/btn.png" width="172" height="50">
+<a download="Handbook-Link" href="https://github.com/Propo41/msa-workshop/blob/sa-bd/Resources/ProjectFiles/README.md" title="View Handbook">
+    <img alt="View" src="Assets/btn.png" width="172" height="50">
 </a>
 
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsa-bd%2Fwebdev-dotnet-react&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FPropo41%2Fmsa-workshop%2Fblob%2Fsa-bd%2FResources%2FProjectFiles%2FREADME.md&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+
+### View the **Event Slides**
+
+<a download="Slide-link" href="https://github.com/Propo41/msa-workshop/blob/sa-bd/Resources/Slides/Ali-Ahnaf_Introduction-to-Web-Development.pdf" title="View Slides">
+    <img alt="View" src="Assets/btn.png" width="172" height="50">
+</a>
+
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FPropo41%2Fmsa-workshop%2Fblob%2Fsa-bd%2FResources%2FSlides%2FAli-Ahnaf_Introduction-to-Web-Development.pdf&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+
 
 ### The handbook covers- 
 * How to setup the environment to start developing with .Net and React
@@ -39,7 +48,7 @@ Check out [Microsoft Learning Paths](https://docs.microsoft.com/bs-cyrl-ba/learn
 
 ## :movie_camera: Event Recording
 
-[Full Playlist](https://www.youtube.com/playlist?list=PLIQ7u2lvft7zGbp22YGfSrIZW3wpyqHsk) Available on **YouTube**
+[Recording](https://stdntpartners-my.sharepoint.com/:v:/g/personal/ahnaf_ali_studentambassadors_com/EcRur_l-HklAi3QPavZJib0BgOInW42NP9ru6l37LoiVlQ?e=BR6Gz6) Available on **OneDrive**
 
 ## :star: Credits
 - Speakers : 
