@@ -21,7 +21,7 @@ This Web Development Workshop is designed to quickly introduce you to developing
  - Uploading files to Cloud Buckets (namely [UploadCare](https://uploadcare.com/))
 
 ## :books: Event Handbook 
-### View the **Exclusive Handbook** and get started with Web Development today!
+### Download the **Exclusive Handbook** and get started with Web Development today!
 
 <a download="Handbook-Link" href="https://github.com/Propo41/msa-workshop/blob/sa-bd/Resources/ProjectFiles/README.md" title="View Handbook">
     <img alt="View" src="Assets/btn.png" width="172" height="50">
@@ -29,7 +29,7 @@ This Web Development Workshop is designed to quickly introduce you to developing
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FPropo41%2Fmsa-workshop%2Fblob%2Fsa-bd%2FResources%2FProjectFiles%2FREADME.md&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-### View the **Event Slides**
+### Download the **Event Slides**
 
 <a download="Slide-link" href="https://github.com/Propo41/msa-workshop/blob/sa-bd/Resources/Slides/Ali-Ahnaf_Introduction-to-Web-Development.pdf" title="View Slides">
     <img alt="View" src="Assets/btn.png" width="172" height="50">
